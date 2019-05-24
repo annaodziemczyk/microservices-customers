@@ -1,0 +1,25 @@
+language: node_js
+node_js:
+  - "10"
+services:
+  - docker
+env:
+  global:
+    - GOOGLE_APPLICATION_CREDENTIALS=~/gcloud-service-key.json
+    - PROJECT_NAME_PRD=microservices-shop
+    - CLUSTER_NAME_PRD=customer
+    - CLOUDSDK_COMPUTE_ZONE=us-central1-a
+    - DOCKER_IMAGE_NAME=customer-node
+    - KUBE_DEPLOYMENT_NAME=customer-node
+    - KUBE_DEPLOYMENT_CONTAINER_NAME=customer-node
+    - NODE_ENV=CI
+before_deploy:
+  - curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+  - chmod +x ./kubectl
+  - sudo mv ./kubectl /usr/local/bin/kubectl
+deploy:
+  - provider: script
+    script: chmod +x ./deploy-production.sh && ./deploy-production.sh
+    skip_cleanup: true
+    on:
+      branch: master
