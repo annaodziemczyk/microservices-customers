@@ -39,7 +39,7 @@ exports.getCustomers = async (req, reply) => {
 exports.getSingleCustomer = async (req, reply) => {
     try {
         const id = req.params.id;
-        return await Customer.findById(id);
+        return await Customer.findOne({userId:id}).exec();
 
     } catch (err) {
         throw boom.boomify(err);
@@ -62,7 +62,7 @@ exports.updatePrimaryCustomerDetails = async (req, reply) => {
     try {
         const id = req.params.id;
         let updatedCustomer = await Joi.validate(req.body, customerSchema, { abortEarly: false });
-        return await Customer.findByIdAndUpdate(id, updatedCustomer, {new:true});
+        return await Customer.findOneAndUpdate({userId:id}, updatedCustomer, {new:true});
 
     } catch (err) {
         throw boom.boomify(err);
@@ -73,7 +73,7 @@ exports.addAddress = async (req, reply) => {
     try {
         const id = req.params.id;
         let address = await Joi.validate(req.body, addressSchema, { abortEarly: false });
-        let customer = await Customer.findOne({_id:id, "adresses.addressLine1":address.addressLine1});
+        let customer = await Customer.findOne({userId:id, "adresses.addressLine1":address.addressLine1});
         if(customer){
             throw boom.boomify(new Error("The specified address already exists"));
         }
@@ -106,7 +106,7 @@ exports.addContactNumber = async (req, reply) => {
     try {
         const id = req.params.id;
         let contact = await Joi.validate(req.body, contactSchema, { abortEarly: false });
-        let customer = await Customer.findOne({_id:id, "contactNumbers.telnumber":contact.telnumber});
+        let customer = await Customer.findOne({userId:id, "contactNumbers.telnumber":contact.telnumber});
         if(customer){
             throw boom.boomify(new Error("The specified contact number already exists"));
         }
@@ -139,7 +139,7 @@ exports.makePrimaryAddress = async (req, reply) => {
     try {
         const id = req.params.id;
         let updatedCustomer = await Joi.validate(req.body, customerSchema, { abortEarly: false });
-        customer = await Customer.findById(id, updatedCustomer);
+        customer = await Customer.findOne({userId:id}, updatedCustomer);
         cus
 
     } catch (err) {
@@ -152,7 +152,7 @@ exports.deleteCustomerDetails = async (req, reply) => {
     try {
         const id = req.params.id;
 
-        const customer = await Customer.findByIdAndRemove(id);
+        const customer = await Customer.findOneAndRemove({userId:id});
         if(customer){
             return customer;
         }
