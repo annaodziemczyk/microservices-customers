@@ -6,6 +6,7 @@ var _ = require('lodash');
 
 
 const addressSchema = Joi.object({
+    _id:Joi.string(),
     addressLine1:Joi.string().required(),
     addressLine2: Joi.string(),
     city: Joi.string().required(),
@@ -73,15 +74,28 @@ exports.addAddress = async (req, reply) => {
     try {
         const id = req.params.id;
         let address = await Joi.validate(req.body, addressSchema, { abortEarly: false });
-        let customer = await Customer.findOne({userId:id, "adresses.addressLine1":address.addressLine1});
-        if(customer){
-            throw boom.boomify(new Error("The specified address already exists"));
+        let customer = await Customer.findOne({userId:id});
+
+        if(address && address._id && address._id==customer.primaryAddress._id){
+            customer.primaryAddress = address;
+        }else{
+            if(customer.addresses.length>0 && address._id){
+               customer.addresses = _.map(customer.addresses, (customerAddress)=>{
+
+                    if(customerAddress._id == address._id){
+                        customerAddress = address;
+                    }
+                    return customerAddress;
+
+                });
+
+            }else{
+                customer.addresses.push(customer.primaryAddress);
+            }
+
         }
 
-        return await Customer.findOneAndUpdate(
-            { _id: id },
-            { $push: { addresses: address } },
-            {new:true}).exec();
+        return customer.save();
 
 
     } catch (err) {
